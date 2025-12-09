@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Virgil Peachey - Polarity Flow</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        body {
+            background: white;
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .container {
+            max-width: 1200px;
+            width: 100%;
+        }
+        .speaker-label {
+            font-size: 18px;
+            font-weight: bold;
+            color: #1e3a5f;
+            margin-bottom: 15px;
+        }
+        .ribbon-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+        .ribbon {
+            display: flex;
+            gap: 3px;
+        }
+        .block {
+            width: 50px;
+            height: 60px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            position: relative;
+        }
+        .block:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            z-index: 100;
+        }
+        .block.positive { background: #22c55e; }
+        .block.negative { background: #ef4444; }
+        .block.neutral { background: #94a3b8; }
+        
+        .sample-count {
+            font-size: 14px;
+            color: black;
+            font-style: italic;
+            margin-left: 10px;
+        }
+        
+        .tooltip {
+            position: fixed;
+            background: white;
+            border: 2px solid #1e3a5f;
+            border-radius: 8px;
+            padding: 15px;
+            max-width: 400px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            z-index: 1000;
+            display: none;
+            pointer-events: none;
+        }
+        .tooltip-header {
+            font-weight: bold;
+            color: #1e3a5f;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+        .tooltip-phrase {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            padding: 8px;
+            border-radius: 4px;
+        }
+        .tooltip-phrase.positive { background: #dcfce7; color: #166534; }
+        .tooltip-phrase.negative { background: #fee2e2; color: #991b1b; }
+        .tooltip-phrase.neutral { background: #f1f5f9; color: #475569; }
+        
+        .tooltip-quote {
+            font-size: 13px;
+            color: black;
+            line-height: 1.5;
+            border-left: 3px solid #1e3a5f;
+            padding-left: 10px;
+        }
+        
+        .legend {
+            display: flex;
+            gap: 30px;
+            margin-top: 20px;
+            justify-content: center;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            color: black;
+        }
+        .legend-box {
+            width: 20px;
+            height: 20px;
+            border-radius: 3px;
+        }
+        .legend-box.positive { background: #22c55e; }
+        .legend-box.negative { background: #ef4444; }
+        .legend-box.neutral { background: #94a3b8; }
+        
+        .annotation {
+            font-size: 12px;
+            font-weight: bold;
+            text-align: center;
+            margin-top: 5px;
+        }
+        .annotation.positive { color: #22c55e; }
+        .annotation.negative { color: #ef4444; }
+        .annotation.neutral { color: black; }
+        
+        .sequence-label {
+            text-align: center;
+            font-size: 13px;
+            color: black;
+            font-style: italic;
+            margin-top: 25px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="speaker-label">VIRGIL (Professional Colleague)</div>
+        
+        <div class="ribbon-container">
+            <div class="ribbon" id="ribbon"></div>
+            <span class="sample-count">n = 16</span>
+        </div>
+        
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-box positive"></div>
+                <span>Positive (+)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-box negative"></div>
+                <span>Negative (−)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-box neutral"></div>
+                <span>Neutral</span>
+            </div>
+        </div>
+        
+        <div class="sequence-label">← Interview Sequence →</div>
+    </div>
+    
+    <div class="tooltip" id="tooltip"></div>
+    
+    <script>
+        const data = [
+            {entry: 1, polarity: "positive", phrase: "was a legend", quote: "Terry was a legend. Establishes Terry's exceptional reputation in pilot community."},
+            {entry: 2, polarity: "positive", phrase: "was well regarded", quote: "Terry was well regarded. General positive character/reputation evaluation."},
+            {entry: 3, polarity: "positive", phrase: "very experienced", quote: "Terry was very experienced and highly regarded, so it was interesting to have him in the right seat."},
+            {entry: 4, polarity: "positive", phrase: "believed you wait until the weather is right", quote: "He related stories about his father, who believed that you wait until the weather is right and you could have a fantastic flight."},
+            {entry: 5, polarity: "negative", phrase: "did not seem to be a fire lit under him", quote: "There did not seem to be a fire lit under him. Mr. Peachy would have arisen early to prepare the airplane."},
+            {entry: 6, polarity: "negative", phrase: "not a fire under him", quote: "When Mr. Peachy said it was time to get going, Terry was just pumping up the floats. There was not a fire under him."},
+            {entry: 7, polarity: "negative", phrase: "did not have as much energy", quote: "When they later said goodbye, Terry did not have as much energy as he had shown at previous times."},
+            {entry: 8, polarity: "positive", phrase: "no observations of him being tired", quote: "When asked if Terry seemed rested, Mr. Peachy said there were no observations of him being tired or having anything unusual."},
+            {entry: 9, polarity: "neutral", phrase: "never fiery", quote: "Terry was never fiery. Explains/mitigates low energy observation."},
+            {entry: 10, polarity: "positive", phrase: "always steady", quote: "He was always steady and thoughtful. Reliability/dependability assessment."},
+            {entry: 11, polarity: "neutral", phrase: "could not judge Terry's mood", quote: "Mr. Peachy could not judge Terry's mood on Monday morning. EPISTEMIC LIMITATION - claims inability to assess."},
+            {entry: 12, polarity: "negative", phrase: "more engaged at other times", quote: "Mr. Peachey's impression was that Terry was more engaged in flying at other times."},
+            {entry: 13, polarity: "positive", phrase: "work was right on", quote: "His amphibian work was right on. Professional assessment of competence."},
+            {entry: 14, polarity: "positive", phrase: "was thorough and solid", quote: "They got four blue for landing. Terry was thorough and solid."},
+            {entry: 15, polarity: "positive", phrase: "felt good having his family fly with Terry", quote: "Mr. Peachy felt good having his family fly with Terry. Highest capacity confidence marker."},
+            {entry: 16, polarity: "negative", phrase: "had been landing just perfect up to then", quote: "Terry had been landing just perfect up to then. Contrastive marker - 'up to then' marks end of competence."}
+        ];
+        
+        const ribbon = document.getElementById('ribbon');
+        const tooltip = document.getElementById('tooltip');
+        
+        data.forEach((item, index) => {
+            const block = document.createElement('div');
+            block.className = `block ${item.polarity}`;
+            block.dataset.index = index;
+            
+            block.addEventListener('mouseenter', (e) => {
+                const rect = block.getBoundingClientRect();
+                tooltip.innerHTML = `
+                    <div class="tooltip-header">Entry #${item.entry}</div>
+                    <div class="tooltip-phrase ${item.polarity}">"${item.phrase}"</div>
+                    <div class="tooltip-quote">${item.quote}</div>
+                `;
+                tooltip.style.display = 'block';
+                tooltip.style.left = Math.min(rect.left, window.innerWidth - 420) + 'px';
+                tooltip.style.top = (rect.bottom + 10) + 'px';
+            });
+            
+            block.addEventListener('mouseleave', () => {
+                tooltip.style.display = 'none';
+            });
+            
+            ribbon.appendChild(block);
+        });
+    </script>
+</body>
+</html>
